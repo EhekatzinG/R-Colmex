@@ -1,0 +1,343 @@
+---
+title: "Programación científica en R"
+subtitle: "Introducción a R"
+author: "Marcos Ehekatzin García Guzmán"
+date: 'Agosto de 2024'
+output: 
+  beamer_presentation:
+    theme: "Pittsburgh"
+    colortheme: "whale"
+    fonttheme: "serif"
+    slide_level: 2
+    toc: true
+header-includes:
+   - \usepackage[utf8]{inputenc}
+   - \usepackage[spanish]{babel}
+   - \usepackage{booktabs}
+   - \newcommand{\ind}{\perp\!\!\!\!\perp} 
+   - \usepackage{url}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Modos y atributos
+
+## Atributos intrínsecos: Modo y atributos
+
+- Como ya vimos, las entidades que manipula R se conocen como *objetos*.
+
+- Hasta ahora el tipo de objetos que hemos visto se denominan *atómicos* debido a que todos sus elementos son del mismo tipo o *modo* (numérico, lógico, caracteres).
+
+- Así el vector será del mismo modo que sus elementos.
+
+- Solo hay una excepción, que surge cuando un vector contiene valores faltantes (`NA`).
+
+- Cabe destacar que, incluso si un vector es vacío éste tendra un modo.
+
+## Atributos intrínsecos: Modo y atributos
+
+- Con el modo de un objeto podemos designar el tipo básico de sus elementos. Con la función `mode()` podemos obtener el modo de un objeto.
+
+- Con `R` podemos modificar el modo de cualquier objeto.
+
+- Por ejemplo, considere el vector `z`
+
+```{r, echo=T}
+z <- 0:9
+mode(z)
+```
+```{r, echo = T}
+#Para hacer z un vector de caracteres
+digits <- as.character(z)
+#Para hacer digits un vector numérico
+d <- as.integer(digits)
+
+```
+- Se puede utilizar la función `as.lo que sea` para cambiar el modo.
+
+## Modificación de la longitud de un objeto
+
+- Recordemos que aunque un objeto esté vacío, tiene modo. Por ejemplo:
+```{r, echo = F}
+x <- c(10,5,3,6,9)
+```
+
+```{r, echo=T}
+#Ejemplo 1
+mode(x[x<0])
+#Ejemplo 2
+v <- numeric()
+mode(v)
+```
+
+## Modificación de la longitud de un objeto
+
+- Una vez creado un objeto pueden añadirse nuevos elementos simplemente asignándolos a un índice que esté fuera del rango original:
+
+```{r, echo = T}
+v[3] <- 17
+```
+
+- ¿Cuál será la longitud del vector `v`? ¿Cuáles serán sis elementos?
+
+- De la misma manera, puede reducirse la longitud de un objeto simplemente volviendo a hacer una asignación
+
+```{r, echo=T}
+alfa <- 1:10
+alfa <- alfa[2*1:5]
+```
+- ¿Cómo se modificó el objeto `alfa`?
+
+## Modificación de atributos
+
+- Ademas de un modo, los objetos tienen atributos. Con la función `attributes()`podemos ver la lista de todos los atributos de un objeto que han sido definidos o asignar atributos nuevos.
+
+- Por su parte, con la función `attr(nombre, objeto)` podemos asignar un atributo nuevo. Por ejemplo, podemos asignarle una nueva dimensión a un objeto
+```{r, echo = T}
+attr(z,"dim") <- c(5,2)
+z
+```
+
+# Factores Nominales
+
+
+
+## Factores Nominales
+
+- Un *factor* es un vector utilizado para especificar una clasificación discreta de los elementos de otro vector de igual longitud.
+
+- Ejemplo: 
+```{r, echo= T}
+estado <- c("tas", "sa", "qld", "nsw", "nsw", "nt",
+            "wa", "wa","qld", "vic", "nsw", "vic", 
+            "qld", "qld", "sa", "tas","sa", "nt", 
+            "wa", "vic", "qld", "nsw", "nsw", "wa",
+            "sa", "act", "nsw", "vic", "vic", "act")
+```
+
+- Para hacer que el vector `estado` se haga un factor utilizaremos la función factor:
+
+```{r, echo = T}
+FactorEstado <- factor(estado)
+levels(FactorEstado)
+```
+
+## Función `tapply()`
+
+- Sigamos el ejemplo anterior y tomemos en cuenta otro vector de la misma longitud:
+
+```{r, echo = T}
+ingresos <- c(60, 49, 40, 61, 64, 60, 59, 54, 62, 69,
+              70, 42, 56,61, 61, 61, 58, 51, 48, 65, 
+              49, 49, 41, 48, 52, 46, 59, 46, 58, 43)
+```
+
+- Para calcular la media de cada estado podemos utilizar la función `taply()`:
+
+```{r, echo = T}
+tapply(ingresos,FactorEstado, mean)
+```
+
+## Función `tapply()`
+
+- Ejercicio:
+
+  a. Hacer un vector llamado `tiempo` que contenga el tiempo de traslado desde su casa al Colmex.
+  b. Hacer un **factor** que contenga el centro de estudios al que pertenece cada uno y otro con la maestría/doctorado que estudian.
+  c. Calcular el número y porcentaje de personas en cada centro
+  d. Calcular el promedio de tiempo de traslado por centro de estudios
+  e. Repetir los cálculos pero por maestría/doctorado
+  
+  
+**Hint**: Para calcular y el número y porcentaje de personas crearemos una función: `F <- function(x) expresión` en donde expresión es el código para calcular el número y el porcentaje de personas.
+
+# Variables indexadas (Arrays)
+
+- Una variarable indexada o `array` es una colección de datos que está indexada por varios índices.
+
+- Un vector puede transformarse en una variable indexada cuando se asigna un vector de dimensiones al atributo `dim`(como ya lo vimos).
+
+- Un elemento de una variable indexada puede referirse dando el nombre de la variable y, entre corchetes, los índices que lo refieren separados por comas.
+
+- Ejercicio:
+
+a. Hagamos un vector con 1500 elementos con las dimensiones `(3,5,100)`.
+
+b. Imprima todos los elementos del vector `s` que estén en el índice 1 y 2 de la tercera dimensión. 
+
+```{r, echo = F}
+s <- 1:1500
+dim(s) <- c(3,5,100)
+#s[,,(1:2)]
+```
+## Uso de una variable indexada
+
+
+- Los elementos de un vector, al formar un array, se ordenan siguiendo una regla: el primer índice siempre se mueve más rápido, y el último es el más lento.
+
+```{r, echo = T}
+#Ejemplo
+a <- 1:8
+dim(a) <- c(2,4)
+a
+```
+
+- Pregunta:¿Cómo se ordena `a` si le damos las dimensiones $2 \times 2 \times 2$?
+
+## Uso de una variable indexadas como índices
+
+- Una variable indexada puede utilizar no solo un vector de índices, sino también una *variable indexada de ínidices*.
+
+- Por ejemplo, si tenemos un array `A <- 1:4` de dimensión $2 \times 2$ y queremos imprimir los elementos [1,1] y [2,2]:
+
+```{r, echo = F}
+A = array(1:4, dim = c(2,2))
+```
+```{r, echo=T}
+i <- c(1,2,1,2)
+dim(i)<- c(2,2)
+A[i]
+```
+
+
+
+
+## Uso de una variable indexadas como índices
+
+
+- Ejercicio:
+  a. Hacer un Array `X` con dimensiones $4\times 5$.
+  b. Extraer los elementos `X[1,3]`, `X[2,2]` y `X[3,1]`con una array `i`
+  c. Reemplazar los elementos con 0
+  
+```{r, echo=F}
+X<-array(1:20, dim=c(4,5))
+i <- array(c(1:3,3:1), dim = c(3,2))
+X[i] <-0
+
+```
+
+## La función `array()`
+
+- Para construir una variable indexada con mayor facilidad podemos utilizar la función `array`, que tiene la siguiente forma:
+
+```
+> Z <- array(vector_de_datos, vector_de_dimensión)
+
+``` 
+
+- Ejercicio: tomen los vectores `w <- 2*1:10` y `q<- 3*1:9` y hagan dos arrays con cada uno. El primero con dimensión $4 \times 3$  y el segundo con dimensión $5 \times 2$
+
+- ¿Cómo son esas array?
+- ¿Qué pasaría si el vector fuera `q<-1`?
+
+
+## Las funciones `cbind()`  y `rbind()`
+
+- Con las funciones `cbind()` y `rbind()` podemos construir matrices nuevas uniendo matrices o vectores horizontal o verticalmente, respectivamente. La sintaxis para utilizar estas funciones es de la forma: 
+
+```
+> x <- cbind(arg_1,arg_2,...)
+```
+- Nota `cbind()`: Los argumentos pueden ser de cualquier longitud en el caso de que sean vectores.
+  - Si los argumentos son matrices entones **deben** tener el mismo número de filas.
+  - Si uno de los argumentos es un vector y otro es una matriz, entonces el vector no puede ser más largo que el número de filas de la matriz. 
+- ¿Qué pasa si el vector es más corto?
+- La función `rbind()` realiza el mismo papel pero tomando en cuneta el número de columnas.
+  
+
+# Listas y hojas de datos
+
+## Listas
+
+- Una *lista* es un objeto que consiste en una colección ordenada de objetos o *componentes*.
+
+- Los componentes no tienen que tener el mismo modo, por ejemplo
+
+```{r, echo=T}
+Lst <- list(nombre="Pedro", esposa = "María", hijos =3, 
+            edad =c(4,7,9))
+```
+
+- Los componentes siempre están numerados. Por ejemplo:
+
+```{r, echo=T}
+#Esposa
+Lst[[2]]
+#Edad del segundo hijo
+Lst[[4]][2]
+```
+## Listas
+
+- Cuando son listas más grandes puede ser complicado recordar el número y la dimensión de cada uno de sus componentes.
+
+- Para facilitar el acceso a los componentes podemos utilizar `Lst$nombre`:
+
+- Ejercicio: Repita los ejemplos de la slide anterior utilizando esta nueva estructura.
+
+# Data Frames
+
+- Un `dataframe` es una clase de objeto que tiene las siguientes particularidades:
+  - Los componentes deben ser vectores (numéricos, caracteres o lógicos), factores, matrices numéricas, listas u otras ojas de datos.
+  - Las matrices, listas y hojas de datos contribuyen a la nueva hoja de datos con tantas variables como columnas, elementos o variables que posean, respectivamente.
+  - Los vectores numéricos y los factores se incluyen sin modificar, los vectores no numéricos se fuerzan a factores, cuyos niveles son los únicos valores que pertenecen al vector.
+  - Los vectores que constituyen la hoja de datos deben tener todos *la misma longitud* y las matrices deben tener el mismo *tamaño de filas*
+  
+## Construcción de Data Frames
+
+- Se puede construir una hoja de datos utilizando la función `data.frame`.
+- Con `as.data.frame` podemos  forzar algunos objetos para que  se conviertan en una hoja de datos.
+
+```{r,echo=T}
+cont <- data.frame(dom=FactorEstado, bot=ingresos)
+```
+
+## Construcción de Data Frames
+- Para acceder a un elemento del data frame utilizaremos el mismo método que con las listas (`data.frame$elemento`)^[También podemos agregar un nuevo elemento usando este método.]:
+  - Ejemplo: ¿Qué valor obtenemos si escribimos `cont$bot[3]`?
+
+- Ejercicio, tome los vectores de tiempo de traslado y los factores de centro de estudios y maestría/doctorado y haga un data frame.
+
+- Seleccione los datos de tiempo de traslado que:
+  a. Son de su centro
+  b. Son de su maestría/doctorado
+  c. Los datos que **no** son ni de su centro ni de su maestría/doctorado.
+  d. Obtenga la media y la desviación estándar utilizando el método de su elección.
+  
+## Construcción de Data Frames
+
+Ahora hagamos un ejercicio con datos reales. 
+
+1. Descarguen el archivo "homicidios" del [`Github`](https://github.com/EhekatzinG/R-Colmex) de la clase y ábranlo. Este archivo contiene el número de homicidios por estado durante el periodo 1990-2023. 
+
+2. Obtengan el promedio de homicidios por año.
+
+
+```{r, echo = F}
+homicidios<- readRDS("D:/OneDrive - El Colegio de México A.C/Programación Científica en R/Presentaciones/2_Objetos_Modos/homicidios.rds")
+Fyear <- as.factor(homicidios$Year)
+#tapply(homicidios$Total, Fyear, mean)
+```
+3. El número de homicidios por estado durante cada periodo
+
+```{r, echo = F}
+Festado <- as.factor(homicidios$Estado)
+#tapply(homicidios$Total, Festado, sum)
+```
+
+4. El número de homicidios total durante este sexenio. 
+
+```{r, echo = F}
+#sum(homicidios$Total[homicidios$Year>=2018])
+```
+
+5. La tasa de crecimiento del número de homicidios de mujeres en este sexenio (año 2018 vs año 2023) y la tasa de crecimiento de los homicidios de mujeres en el sexenio pasado (año 2012 vs 2017).
+
+```{r, echo=F}
+#100*sum(homicidios$Mujer[homicidios$Year == 2023]) / sum(homicidios$Mujer[homicidios$Year == 2018])-100
+
+#100*sum(homicidios$Mujer[homicidios$Year == 2017]) / sum(homicidios$Mujer[homicidios$Year == 2012])-100
+
+```
