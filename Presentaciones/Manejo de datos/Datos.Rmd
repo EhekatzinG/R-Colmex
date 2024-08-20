@@ -1,0 +1,214 @@
+---
+title: "Programación científica en R"
+subtitle: "Introducción a R"
+author: "Marcos Ehekatzin García Guzmán"
+date: 'Agosto de 2024'
+output: 
+  beamer_presentation:
+    theme: "Pittsburgh"
+    colortheme: "whale"
+    fonttheme: "serif"
+    slide_level: 2
+    toc: true
+header-includes:
+   - \usepackage[utf8]{inputenc}
+   - \usepackage[spanish]{babel}
+   - \usepackage{booktabs}
+   - \newcommand{\ind}{\perp\!\!\!\!\perp} 
+   - \usepackage{url}
+---
+
+```{r setup, include=FALSE, coment = ""}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Lectura de datos de un archivo
+
+## Lectura de datos de un archivo
+
+- Los datos suelen leerse desde archivos externos, en lugar de crearlos manualmente.
+- La clase anterior vimos que para importar un archivo en formato .rds utilizamos la función `readRDS()`
+- Sin embargo, la mayor parte de archivos que se usan cotidianamente tienen formatos distintos (.txt, .csv, .xlsx ,.dta, .sav, etc) 
+
+- Para importar archivos de forma sencilla podemos utilizar distintas paqueterías.
+
+## Lectura de datos de un archivo
+
+
+  - Una paquetería es una colección de funciones y conjuntos de datos creados por la comunidad de `R'.
+- Para instalar una nueva paquetería utilizaemos la función `install.packages("paquetería")`.^[Dependiendo del repositorio esto puede cambiar.]
+
+- Podemos revisar qué paqueterías tenemos instaladas utilizando la función `installed.packages()` y removerlas con las funciones `remove.packages()`.
+
+- Podemos tener infinidad de paqueterías instaladas, por lo que debemos especificar cuales de esas paqueterías utilizaremos.
+  - Esto lo hacemos con la función `library("paquetería")`.
+  
+## La paquetería `haven`
+
+- Para la importación de datos utilizaremos principalmente paquetería `haven`.
+
+- Nos ayudará a importar datos de SAS (`read_sas()`), SPSS (`read_sav()`) y stata (`read_dta()`)
+
+1. El primer paso es instalarla:
+
+```
+> install.packages('haven')
+```
+2.  El segundo paso es cargar la paquetería:
+
+```
+> library('haven')
+```
+- Nota: Las paqueterías solamente las tenemos que instalar una vez, mientras que siempre debemos indicar qué paqueterías utilizaremos.
+
+## La paquetería `readxl`
+
+- La paquetería `readxl` nos ayudará a importar archivos desde excel, ya sea .xls o .xlsx, con la función `read_excel()`. 
+
+- `readxl` contiene ejemplos de archivo, utilicemos uno de estos para ver más de sus funcionalidades.
+
+```{r, echo = F, warning=F, comment=F}
+library(readxl)
+```
+
+```{r, echo = T, comment=""}
+readxl_example()
+```
+## La paquetería `readxl`
+Ejemplos:
+
+```{r, echo=T}
+xlsx_example <- readxl_example("datasets.xlsx")
+# Podemos especificar en qué hoja del archivo trabajaremos
+excel_sheets(xlsx_example)
+example1 <- read_excel(xlsx_example, sheet = "mtcars")
+# Podemos especificar qué celdas vamos a importar
+example2 <- read_excel(xlsx_example, n_max = 3)
+example3 <- read_excel(xlsx_example, range = "C1:E4")
+example4 <-read_excel(xlsx_example, range = "mtcars!B1:D5")
+```
+
+# Análisis básico de una base de datos
+
+## Análisis básico de una base de datos
+
+- La función más simple para describir una variable es la función summary.
+  - Nos provee de los siguientes datos: Media, Mediana, Mínimo y Máximo y el primer y tercer cuartil. 
+
+```{r, echo = T}
+df <- data.frame(unclass(summary(example1$mpg)))
+df
+```
+
+- En la función `summary()` también podemos incluir vectores lógicos.
+```{r, echo = T}
+summary(example1$mpg[example1$gear ==4])
+``` 
+## Análisis básico de una base de datos
+
+- Para ver la relación entre dos variables podemos ver el coeficiente de correlación: $r = \frac{\sum(x_i-\bar{x})(y_i-\bar{y})}{\sqrt{\sum (x_i -\bar{x})^2\times \sum(y_i-\bar{y})^2}}$
+  - Básicamente, el coeficiente de correlación nos dice qué tan relacionadas están dos variables y en qué dirección.
+  - Si el coeficiente es negativo, entonces la relación de las variables es inversa (si una sube, otra baja)
+  - Si el coeficiente es positivo, el coeficiente dice que si una variable aumenta, la otra también.
+  
+```{r, echo = T}
+# Ejemplo
+cor(example1$mpg,example1$hp)
+```
+
+## Análisis básico de una base de datos
+
+- Para visualizar la relación entre dos variables podemos utilizar un gráfico de distpersión:
+
+```
+# Ejemplo 
+> disp <- plot(example1$mpg, example1$hp)
+```
+
+- Mientras que para visualizar como evoluciona una variable a través del tiempo podemos utilizar una gráfica de línea:
+
+```{r, echo = F, include=F}
+homicidios <- readRDS("C:/Users/user/OneDrive - El Colegio de México A.C/Programación Científica en R/Presentaciones/2_Objetos_Modos/homicidios.rds")
+disp <- plot(example1$mpg, example1$hp)
+lines <- plot(homicidios$Year[homicidios$Cve=="09"], homicidios$Total[homicidios$Cve=="09"], type = "l")
+```
+
+```
+> lines <- plot(homicidios$Year[homicidios$Cve=="09"], 
+            homicidios$Total[homicidios$Cve=="09"], 
+            type = "l")
+```
+## Análisis básico de una base de datos
+
+- Además de los descriptivos básicos, muchas veces nos puede interesar cómo se ve la distribución de las variables.
+
+- Para ello podemos hace histogramas, con la función `hist()`
+```{r, echo=F}
+hist(example1$mpg)
+```
+
+
+## Análisis básico de una base de datos
+
+- Para visualizar los descriptivos básicos podemos utilizar una gráfica de caja o *boxplot*, que a demás es útil para comparar dos muestras.
+
+```{r, echo = T, size="tiny"}
+boxplot(example1$mpg[example1$gear==3],
+        example1$mpg[example1$gear==4])
+```
+
+## Ejercicios
+
+- Ejercicio 1: Utilizando la base de homicidios
+
+1. Genere un data.frame con el total de homicidios en el país por año.
+  - Hint: Utilice la función `rownames(df)` para crear una nueva columna en el df.
+  - Hint: Puede cambiar el nombre de las variables con: `names(df)<-c("name_1", ..., "name_n"`)
+2. Haga una gráfica que muestre la evolución de los homicidios en México.
+3. Repita lo anterior pero solamente para los homicidios de hombres.
+  
+```{r, echo = F, include=F}
+#1
+homicidios <- readRDS("C:/Users/user/OneDrive - El Colegio de México A.C/Programación Científica en R/Presentaciones/2_Objetos_Modos/homicidios.rds")
+hom_tot <- as.data.frame(tapply(homicidios$Total, as.factor(homicidios$Year), sum))
+names(hom_tot)<- c("Homicidios")
+hom_tot$year <- rownames(hom_tot)
+#2
+plot(hom_tot$year, hom_tot$Homicidios, type = "l")
+```
+
+## Ejercicios
+
+- Ejercicio 2: Utilizando la base de la ENOE
+
+1. Obtenga las estadísticas descriptivas del ingreso (ingocup) para:
+  a. El total de la muestra
+  b. Mujeres y hombres por separado (Hombres: sex == 1, Mujeres: sex == 2)
+2. Haga una gráfica de caja sobre el ingreso (log) separando a hombres y mujeres.
+3. Haga un histograma sobre el ingreso separando a hombres y mujeres.
+4. Haga un vector con el promedio de el ingreso (log) y la edad por estado (ent) y otro con el promedio de la edad.
+3. Haga una gráfica que muestre la relación entre el ingreso (log) y la edad (eda)
+5. Haga un data frame que contenga los dos vectores y haga una gráfica que muestre la relación entre el ingreso promedio y la edad promedio.
+
+```{r}
+library('haven')
+enoe <- read_dta("C:/Users/user/Downloads/dddd/socio.dta")
+enoe$lwage <- log(enoe$ingocup)
+# 1
+#Todos
+summary(enoe$ingocup)
+#Hombres
+summary(enoe$ingocup[enoe$sex==1])
+#Mujeres
+summary(enoe$lwage[enoe$sex==2])
+
+boxplot(enoe$lwage[enoe$sex==1],enoe$lwage[enoe$sex==2])
+hist(enoe$lwage[enoe$sex==2])
+
+lwage <- tapply(enoe$lwage, enoe$ent, mean)
+edad <- tapply(enoe$eda, enoe$ent, mean)
+
+ing_eda <- cbind(lwage, edad)
+plot(edad,lwage)
+```
