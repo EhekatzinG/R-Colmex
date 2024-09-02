@@ -1,0 +1,188 @@
+---
+title: "Programación científica en R"
+subtitle: "Manejo de datos con dyplr()"
+author: "Marcos Ehekatzin García Guzmán"
+date: 'Agosto de 2024'
+output: 
+  beamer_presentation:
+    theme: "Pittsburgh"
+    colortheme: "whale"
+    fonttheme: "serif"
+    slide_level: 2
+    toc: false
+header-includes:
+   - \usepackage[utf8]{inputenc}
+   - \usepackage[spanish]{babel}
+   - \usepackage{booktabs}
+   - \newcommand{\ind}{\perp\!\!\!\!\perp} 
+   - \usepackage{url}
+---
+
+# Introducción
+
+- Hasta ahora hemos hecho todas las modificaciones a nuestros datos sin utilizar
+ninguna paquetería extra.
+
+- Esta forma de hacerlo no es eficiente, aunque es útil durante el aprendizaje.
+
+- A partir de ahora utilizaremos la paquetería `tidyverse` para acceder a funciones que nos harán la vida más fácil.
+
+## Introducción 
+
+- `tidyverse` es una paquetería diseñada para la ciencia de datos, entre ellas:
+
+  - `dplyr`: Consiste en una *gramática* para la manipulación de datos. Proporciona *verbos* que ayudan a que la manipulación de los datos sea consistente.
+
+  - `tidyr`: Provee de un conjunto de funciones diseñadas para solucionar los problemas más comunes durante la limpieza de datos.
+
+  - `ggplot2`: Provee de una gramática para la creación de gráficas, además de que permite manipular fácilmente los aspectos visuales.
+
+  - `purrr`: Provee de herramientas que mejoran las capacidades de programación de `R` permitiendo un uso fácil y entendible de funciones y vectores.
+  
+# `dplyr`
+
+`dplyr` contiene una gramática para la manipulación de datos basada en el uso de los siguientes verbos/funciones:
+
+1. `mutate()`: Permite agregar nuevas variables (que son función de variables ya existentes).
+2. `select()`: Hace eso, selecciona variables según sus nombres.
+3. `filter()`: Filtra los datos según las condiciones que proveamos.
+4. `summarise()`: Produce un resumen de las variables de un data frame.
+5. `arrange()`: Cambia el orden de las filas de un df.
+
+## `dplyr`
+
+- Como siempre, debemos comenzar por la instalación de la paquetería y cargar la librería:
+
+```
+  > install.packages('tidyverse')
+  > library('tidyverse')
+```
+
+- Las funciónes de `dyplr` siempre utilizan la misma sintaxis:
+  1. El primer argumento es el df sobre el que trabajaremos,
+  2. Los siguientes argumentos serán las instrucciones para manipular el df.
+  3. El resultado será un nuevo data frame.
+  
+## `dyplr`
+
+- Para ver cómo se utiliza cada función utilicemos un df precargado en la librería.
+
+```{r, echo=F, warning=F, comment=F, include=F}
+library('tidyverse')
+```
+```{r,out.width="50%", echo=TRUE}
+head(starwars)
+```
+## `filter`
+
+- Hagamos un `data frame` con todos los personajes humanos de starwars, conservando todas las demás variables.
+
+- ¿Sugerencias?
+
+## `filter`
+
+
+```{r, echo=TRUE}
+humans <- filter(starwars, species == "Human")
+head(humans)
+```
+
+## `mutate()`
+
+- Ahora utilizaremos la función mutate calcularemos el índice de masa corporal para los humanos de sw.
+
+```{r, echo=T}
+humans <- mutate(humans, bmi=mass/((height/100)^2))
+humans$bmi
+```
+
+## `select`
+
+- Si no nos interesan todas las variables, podemos gardar solo las que queremos:
+
+```{r, echo = T}
+humans <- select(humans, name, mass, height, bmi, sex, homeworld)
+head(humans)
+```
+
+## Ejercicio
+
+- Hacer una gráfica de caja con el índice de masa corporal para todos, para hombres y para mujeres.
+
+```{r, echo = F, out.width="90%"}
+boxplot(humans$bmi, humans$bmi[humans$sex == "male"], humans$bmi[humans$sex == "female"], names = c("All", "Males", "Females"))
+```
+
+## `summarise()`
+
+- Summarise nos ayuda a colapsar las variables-
+- Ejemplo: 
+```{r, echo = T}
+summarise(humans, bmi = mean(bmi, na.rm = T))
+```
+
+- Noten que esto no parece muy útil. Podríamos hacer lo mismo así:
+```{r, echo =TRUE}
+mean(humans$bmi[!is.na(humans$bmi)])
+```
+
+## `summarise()`
+
+- `summarise()` es más útil si lo combinamos con la función group_by(), que sigue la misma gramática.
+- Ejemplo, guardemos la media, la mediana y la varianza del índice de masa corporal por planeta de origen.
+
+```{r, echo=T, warning=FALSE}
+by_world<- group_by(humans,homeworld)
+humans_sum <- summarise(by_world, mean = mean(bmi, na.rm = T), median = median(bmi, na.rm = T), var = var(bmi, na.rm = T))
+head(humans_sum)
+```
+
+## El operador `%>%`
+
+- Una facilidad que nos da `dyplr`es que podemos utilizar varios verbos al mismo tiempo para modificar una base de datos.
+- Esto lo podemos hacer con ayuda del operador `%>%`
+
+- Ejemplo: Repliquemos el df `humans_sum`
+
+```{r, echo = T}
+humans_sum <- starwars %>%
+  group_by(homeworld) %>%
+  filter(species == "Human") %>%
+  mutate(bmi  = mass / ((height / 100)  ^ 2)) %>%
+  summarise(mean = mean(bmi, na.rm = T), 
+            median = median(bmi, na.rm = T), 
+            var = var(bmi, na.rm = T))
+```
+
+## Ejercicio
+
+1. Utilizando el df de starwars, graficar el número de personajes por año de nacimiento.
+
+```{r, echo = F, includes= F}
+ex2 <- starwars %>%
+  group_by(birth_year) %>%
+  filter(!is.na(birth_year)) %>%
+  summarise(num = length(name))
+plot <- plot(ex2$birth_year, ex2$num, type = "l", ylab = "Number", xlab= "Birth year")
+```
+
+```{r, echo=T, out.width="80%"}
+plot
+```
+
+# Ejercicios
+
+- Ejercicio 1: Utilizando la base de homicidios
+
+1. Genere un data.frame con el total de homicidios en el país por año.
+2. Haga una gráfica que muestre la evolución de los homicidios en México.
+
+## Ejercicios
+- Ejercicio 2: Utilizando la base de la ENOE
+
+1. Obtenga las estadísticas descriptivas del ingreso (ingocup) para:
+  a. El total de la muestra
+  b. Mujeres y hombres por separado (Hombres: sex == 1, Mujeres: sex == 2)
+2. Haga una gráfica de caja sobre el ingreso (log) separando a hombres y mujeres.
+3. Haga un vector con el promedio de el ingreso (log) y la edad por estado (ent) y otro con el promedio de la edad.
+4. Haga una gráfica que muestre la relación entre el ingreso (log) y la edad (eda)
