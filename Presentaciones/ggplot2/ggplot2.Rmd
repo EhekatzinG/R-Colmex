@@ -1,0 +1,358 @@
+---
+title: "Programación científica en R"
+subtitle: "ggplot2"
+author: "Marcos Ehekatzin García Guzmán"
+date: 'Septiembre de 2024'
+output: 
+  beamer_presentation:
+    theme: "Pittsburgh"
+    colortheme: "whale"
+    fonttheme: "serif"
+    slide_level: 2
+    toc: false
+header-includes:
+   - \usepackage[utf8]{inputenc}
+   - \usepackage[spanish]{babel}
+   - \usepackage{booktabs}
+   - \newcommand{\ind}{\perp\!\!\!\!\perp} 
+   - \usepackage{url}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introducción
+
+En R existen distintos sistemas para hacer gráficas, pero una de las más versátiles es **ggplot2**.
+
+- **ggplot2** implementa la *gramática de gráficos*, que es un sistema para describir y construir gráficas
+
+- **ggplot2** es parte de **tidyverse** por lo que debemos cargar la librería para utilizarlo:
+
+```
+> library('tidyverse')
+```
+
+NOTA: Recuerden que solo es necesario instalar la paquetería una vez, pero cada que la utilicemos hay que cargarla en el script.
+
+## Introducción
+
+Utilizaremos un data frame que se incluye en **tidyverse** llamado *mpg*:
+
+- Este data frame contiene infromación de 38 modelos de autos recolectada por la US Environment Protection Agency.
+
+```{r, include=FALSE }
+library('tidyverse')
+```
+
+```{r, echo = F}
+head(mpg)
+```
+
+## ggplot2
+
+Para hacer una gráfica con **ggplot2** empezaremos usando la función **ggplot()**:
+
+- El primer argumento de la función es el data frame que usaremos:
+
+```
+>   ggplot(data = mpg)
+```
+
+## ggplot2 
+
+Para completar la gráfica hay que añadir capas.
+
+- Para hacer una gráfica de dispersión, añadiremos una capa de puntos con la función **geom_point()**
+
+```
+>   ggplot(data = mpg) +
+      geom_point(mapping = aes(x = displ, y = hwy))
+```
+
+## ggplot2 
+
+```{r, echo=FALSE}
+ggplot(data = mpg) +
+  geom_point(mapping = aes(x = displ, y = hwy))
+```
+
+
+## Mappings
+
+Podemos agregar una tercera variable a un scatterplot asignándola a un *aesthetic*:
+
+- Un *aesthetic* es una propiedad visual de los objetos de la gráfica (tamaño, color, forma, etc.)
+
+```
+>   ggplot(data = mpg) +
+      geom_point(mapping = aes(x=displ, y = hwy, 
+                                color = class))
+```
+
+- En este caso agragamos la estética color sobre la variable class. **ggplot2** asignará un color único para cada valor único de la variable.
+  - Otras esteticas son el tamaño (**size**), la forma (**shape**) y la transparencia (**alpha**)
+
+## Mappings
+
+```{r, echo = F}
+ggplot(data = mpg) +
+  geom_point(mapping = aes(x=displ, y = hwy, 
+                           color = class))
+```
+
+## Mapping
+
+También podemos agregar estéticas a la gráfica sin que estas aporten información sobre las variables.
+
+- Por ejemplo, hagamos la misma gráfica pero cambiemos la forma y el color de todos los puntos.
+
+- La única estética que aportará información será la transparencia.
+
+```
+> ggplot(data = mpg)+ 
+    geom_point(mapping = aes(x = displ, y = hwy, 
+                            alpha = class), 
+                            color = "blue", shape =0)
+```
+
+
+## Mapping
+
+```{r, echo = F}
+ggplot(data = mpg)+ 
+    geom_point(mapping = aes(x = displ, y = hwy, alpha = class), color = "blue", shape = 15)
+```
+
+# Facets
+
+También podemos separar nuestra gráfica en *facetas* (subgráficas que muestran distintos sobconjuntos de nuestros datos)
+
+Usaremos la función **facet_wrap()**:
+  - El primer argumento debe ser una fórmula, la cual crearemos con el símbolo **~** y después pondremos el nombre de una variable **discreta**.
+  
+```
+>   ggplot(data = mpg)+
+      geom_point(mapping = aes(x= displ, y = hwy)) +
+      facet_wrap(~ class, nrow = 2)
+```
+
+## Facets
+
+```{r, echo = F}
+ggplot(data = mpg)+
+      geom_point(mapping = aes(x= displ, y = hwy)) +
+      facet_wrap(~ class, nrow = 2)
+```
+  
+# Objetos geométricos
+
+Las gráficas con ggplot utilizan distintos *geoms* (objetos geométricos que se utilizan para representar datos).
+
+- Las gráficas de dispersión usan puntos, pero hay muchos otros objetos (lineas, barras, polígonos, etc.)
+
+- Podemos utilizar varios objetos para crear una sola gráfica y asignar distintas estéticas a cada uno:
+
+
+```
+>   ggplot(data = mpg, mapping = aes(x=displ, y =hwy)) +
+      geom_point() + 
+      geom_smooth(method = lm, 
+                  linetype = "dashed", se = F) +
+      facet_wrap(~ class, nrow = 2)
+```
+
+## Objetos geométricos
+
+
+```{r, echo=FALSE}
+ggplot(data = mpg, mapping = aes(x=displ, y =hwy)) +
+  geom_point() + 
+  geom_smooth(method = lm, 
+              linetype = "dashed", se = F) +
+  facet_wrap(~ class, nrow = 2)
+```
+
+## Objetos geométricos
+![Objetos geométricos]("geoms.png")
+  
+# Transformaciones estadísticas
+
+Las gráficas de dispersión grafican los datos directamente del data frame, mientras que otro tipo de gráficas calculan nuevas variables.
+
+- Las gráficas de barras, histogramas y polígonos de frecuencia agrupan los datos en bins y grafican el número de puntos en cada uno de esos bins.
+
+- Las gráficas de caja hacen un resumen de la distribución.
+
+
+## Ejemplo: Gráficas de barras (count)
+
+```{r, echo = T, out.width="80%"}
+ggplot(data = mpg)+
+  geom_bar(mapping = aes(x = class, fill = trans))
+```
+
+## Ejemplo: Gráficas de barras (prop)
+
+```{r, out.width="80%"}
+ggplot(data = mpg)+
+  geom_bar(mapping = aes(x = class,y = after_stat(prop), 
+                         group = 1,))
+```
+
+# Ajustes de posisión
+
+- **position = "fill"**: Genera una gráfica de barras apilada en donde todas las barras suman 1
+
+- **position = "dodge"**: En lugar de hacer una gráfica de barras apilada, pone cada componente a un lado de otro.
+
+- **position = "jitter"**: [Solo para scatterplot] Agrega una cantidad de ruido aleatorio a cada punto.
+
+
+## Ajustes de posisión (dodge)
+
+
+```{r, echo = T, out.width="80%"}
+ggplot(data = mpg)+
+  geom_bar(mapping = aes(x = class, fill = trans),
+           position = "dodge")
+```
+
+
+## Ajustes de posisión (fill)
+
+
+```{r, echo = T, out.width="80%"}
+ggplot(data = mpg)+
+  geom_bar(mapping = aes(x = class, fill = trans),
+           position = "fill")
+```
+
+
+## Ajustes de posisión (jitter)
+
+
+```{r, echo = T, out.width="70%"}
+ggplot(data = mpg) +
+  geom_point(mapping = aes(x=displ, y = hwy, 
+                           color = class),
+             position = "jitter")
+```
+
+
+# Temas
+
+
+\begin{figure}
+    \centering
+        \caption{Temas}
+    \includegraphics[width = 0.7\textwidth]{themes.png}
+    \label{}
+\end{figure}
+
+
+## Títulos, labels y legends
+
+- Para modificar títulos y etiquetas utilizaremos la función `labs()`:
+
+```{r, echo=TRUE, out.width="50%"}
+p <- ggplot(data = mpg) +
+  geom_point(mapping = aes(x = hwy, y = displ,
+                           color = as.factor(cyl)))+
+  labs(title = "Title",
+         subtitle = "Subtitle",
+         colour = "# of cylinders",
+         x = "Miles per galon (highway)",
+         y = "Engine displacement") +
+  theme(legend.position ="bottom")
+```
+## Títulos, labels y legends
+
+
+```{r, echo=TRUE, out.width="80%"}
+p
+```
+
+# Ejercicios:
+
+## Ejercicio ENOE
+- Para este ejercicio descargaremos la ENOE del primer y segundo trimestre de 2023 y seguiremos los siguintes pasos:
+
+1. Después de cargar cada base, eliminaremos todas las observaciones en donde *ingocup*==999998 | *ingocup*==999999 y nos quedaremos solo con los individuos con edad (eda) entre 15 y 65 años y las observaciones donde *tipo* == 1.
+
+2. Nos quedaremos con las variables ing_x_hrs, anios_esc, fac_tri, emp_ppal y las variables llave (excepto tipo y mes_cal).
+
+  - Nota:hay que cambiar el ingreso por hora (ing_x_hrs) a NA cuando este sea mayor a 999998 (```ing_x_hrs = na_if(ing_x_hrs, 999998)```)
+  
+## Ejercicio ENOE
+
+3. Juntaremos ambas bases de tal manera que solo nos quedemos con las observaciones que hagan match. (Noten como cambian los nombres de las variables)
+
+4. Haremos una nueva variable que denote el tipo de transición entre el sector formal y el informal.
+
+## Ejercicio ENOE
+
+5. Replicaremos las siguientes gráficas 
+  
+  - Dw = diferencia entre el logaritmo del ingreso por hora en cada trimestre.
+  - ling.q2 = logaritmo del ingreso por hora en el segundo trimestre.
+
+
+```{r, include=F, echo=F, warning=F, comment=F}
+library('tidyverse')
+library('haven')
+
+# Cargamos la primera base
+setwd("D:/OneDrive - El Colegio de México A.C/Programación Científica en R/Presentaciones/7_ggplot2")
+enoe1 <- read_dta("ENOE_SDEMT124.dta")
+
+
+keys <- c("cd_a", "ent", "con", "v_sel", "n_hog","h_mud", "n_ren")
+
+
+data1 <- enoe1 %>%
+  filter(ingocup < 999998 & ingocup > 0 & eda >= 15 & eda <= 65 & tipo == 1) %>%
+  mutate(ing_x_hrs = na_if(ing_x_hrs, 999998),
+         ing_x_hrs = na_if(ing_x_hrs, 999999)) %>%
+  select(sex,eda, ing_x_hrs, anios_esc, fac_tri, emp_ppal, n_ent, keys) 
+
+# Repetimos el proceso con la segunda base
+enoe2 <- read_dta("ENOE_SDEMT224.dta")
+data2 <- enoe2 %>%
+  filter(ingocup < 999998 & ingocup > 0 & eda >= 15 & eda <= 65 & tipo == 1) %>%
+  mutate(ing_x_hrs = na_if(ing_x_hrs, 999998),
+         ing_x_hrs = na_if(ing_x_hrs, 999999)) %>%
+  select(sex, eda, ing_x_hrs, anios_esc, fac_tri, emp_ppal, n_ent, keys) 
+
+panel <- inner_join(data1, data2, by = c("cd_a", "ent", "con", "v_sel", "n_hog","h_mud", "n_ren"), suffix = c(".q1", ".q2"))
+
+panel <- panel %>%
+  mutate(ling.q1 = log(ing_x_hrs.q1+1),
+         ling.q2 = log(ing_x_hrs.q2+1),
+         Dw = ling.q2-ling.q1, 
+         transicion = case_when(emp_ppal.q1 == 1 & emp_ppal.q2==2 ~ 'Informal-Formal', 
+                                emp_ppal.q1==2 & emp_ppal.q2 ==1 ~ 'Formal-Informal',
+                                TRUE ~ 'Sin Transición'),
+         anios_esc.q1 = na_if(anios_esc.q1, 99),
+         anios_esc.q2 = na_if(anios_esc.q2, 99),
+         sex = as.character(sex.q1))
+
+
+ plot1 <- ggplot(panel, aes(x = transicion, y = ling.q2, colour = transicion,  weight = fac_tri.q2)) +
+   geom_boxplot(show.legend = F)+
+   theme_classic()
+ 
+plot2 <-  ggplot(panel, aes(x = anios_esc.q1, y = Dw, colour = transicion, weight = fac_tri.q2))+
+   geom_smooth(method = lm)
+
+```
+
+```{r, echo=F, error=F, warning=F, message=F, out.width="60%"}
+library(grid)
+library(gridExtra)
+
+grid.arrange(plot1, plot2, ncol =2)
+
+
+```
