@@ -1,0 +1,62 @@
+---
+title: "Programación científica en R"
+subtitle: "Weights"
+author: "Marcos Ehekatzin García Guzmán"
+date: 'Septiembre de 2024'
+output: 
+  beamer_presentation:
+    theme: "Pittsburgh"
+    colortheme: "whale"
+    fonttheme: "serif"
+    slide_level: 2
+    toc: false
+header-includes:
+   - \usepackage[utf8]{inputenc}
+   - \usepackage[spanish]{babel}
+   - \usepackage{booktabs}
+   - \newcommand{\ind}{\perp\!\!\!\!\perp} 
+   - \usepackage{url}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Factor de expansión
+
+- Una característica de las encuestas probabilísticas es que las viviendas seleccionadas y sus habitantes representan a otras viviendas y personas de condiciones socioeconómicas similares.
+
+- El factor de expansión constituye el peso que se le da a cada unidad muestral para generalizar los resultados de la muestra a la población.
+
+## Factor de expansión
+
+- Para que los estadísticos como la media, las correlaciones y demás sean representativas de la población es necesario utilizar los factores de expansión.
+
+- Para calcular el promedio podemos utilizar la función `weighted.mean(x, w)` (x: variable, w: factor)
+
+- Para calcular el total de la población basta con sumar los factores de expansión.
+
+## Factor de expansión
+
+- Para calcular otros estadísticos podemos 1) crear nuestras propias funciones o 2)utilizar nuevas paqueterías.
+
+- Para calcular los cuantiles podemos utilizar la paquetería `grattan` y la función `weighted_ntile(x, weighted =w, n = integer)`.
+
+- Para calcular otros estadísticos como las correlaciones podemos utilizar la función `wtd.cor(x, y,  w)` de la paquetería `weights`.
+
+- Otros estadísticos los podemos obtener de las funciones de la paquetería `weited_Stats`.
+
+## Factor de expansión
+
+- Al igual que en los estadísticos, es necesario ponderar las observaciones cuando hacemos gráficas.
+
+- Para ello solo es necesario colocarlo como un aesthetic.
+
+```
+ plot1 <- ggplot(panel, aes(x = transicion, y = ling.q2, colour = transicion,  weight = fac_tri.q2)) +
+   geom_boxplot(show.legend = F)+
+   theme_classic()
+ 
+plot2 <-  ggplot(panel, aes(x = anios_esc.q1, y = Dw, colour = transicion, weight = fac_tri.q2))+
+   geom_smooth(method = lm)
+```
