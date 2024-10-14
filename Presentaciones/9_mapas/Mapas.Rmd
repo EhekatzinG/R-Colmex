@@ -1,0 +1,289 @@
+---
+title: "Programación científica en R"
+subtitle: "Mapas"
+author: "Marcos Ehekatzin García Guzmán"
+date: 'Octubre de 2024'
+output: 
+  beamer_presentation:
+    theme: "Pittsburgh"
+    colortheme: "whale"
+    fonttheme: "serif"
+    slide_level: 2
+    toc: false
+header-includes:
+   - \usepackage[utf8]{inputenc}
+   - \usepackage[spanish]{babel}
+   - \usepackage{booktabs}
+   - \newcommand{\ind}{\perp\!\!\!\!\perp} 
+   - \usepackage{url}
+---
+
+  
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Mapas coropléticos
+
+- Hay distintas maneras para producir mapas coropléticos en R, la más utilizada es ggplot2.
+  - Esta nos permite mantener un estilo visual unificado con poco esfuerzo,
+  - Podemos utilizar la gramática de gráficas de ggplot2 para modificar fácilmente la apariencia de los mapas.
+
+- Para poder crear mapas es necesario tener los **shapefiles** al nivel de desagregación que necesitemos.
+  - Los **shapefiles** son archivos que guardan la localización de elementos geográficos y elementos asociados a ellos.
+  - Estos archivos no guardan información topológica.
+
+- Para el caso de México, podemos obtener estos archivos del  Marco Estadístico Nacional.
+
+## Mapas coropléticos
+
+- Una manera más sencilla de hacer mapas es con la paquetería `mxmaps`.
+
+- La paquetería fue desarrollada por Diego Valle-Jones (@diegovalle).
+
+- Esta paquetería ya contiene los shapefiles, de tal manera que no es necesario descargarlos.
+
+- Además, contiene información adicional a nivel estatal y municipal (población).
+
+## Mapas coropléticos (`mxmaps`)
+
+- Instalaremos `mxmaps` desde  un repositorio en `github`:
+
+```
+>     if (!require("devtools")){
+        install.packages("devtools")
+      }
+>   devtools::install_github("diegovalle\mxmaps")
+```
+
+## Mapas coropléticos (`mxmaps`)
+
+- Para poder crear un mapa es necesario que el dataframe que utilicemos tenga una columna llamada `region` y otra llamada `value`.
+
+- La columna `region`  debe contener los códigos de estados o municipios de acuerdo a los establecidos por el Inegi.
+  - Para estados los códigos constan de un string de longitud dos ("01", "02",...)
+  - Para los estados, el código tiene una longitud de cinco ("01001", "01002",...)
+- Si los códigos en nuestra base son numéricos en lugar de strings, podemos utilizar las funciones `str_mxstate()` y `str_mxmunicipio()` para transformarlas a strings y que tengan la longitud adecuada.
+
+## ## Mapas coropléticos (`mxmaps`)
+
+- La paquetería `mxmaps` contiene Varios dataframes de muestra:
+
+```{r, echo=F, out.width="40%", include=FALSE, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(mxmaps)
+library(kableExtra)
+library(viridis)
+```
+
+- df_mxstate_2020
+
+```{r, echo=F, out.width="40%"}
+
+kable(head(df_mxstate_2020),format = "latex", booktabs=TRUE) %>% 
+  kable_styling(latex_options = "scale_down", )
+```
+
+
+- df_mxmunicipio_2020
+
+```{r, echo=F, out.width="40%"}
+
+kable(head(df_mxmunicipio_2020),format = "latex", booktabs=TRUE) %>% 
+  kable_styling(latex_options = "scale_down")
+```
+
+## Mapas coropléticos (`mxmaps`)
+
+- Para hacer un mapa estatal, utilizaremos la función `mxstate_choropleth()`:
+
+```{r, echo=T, warning=FALSE, message=F}
+df_mxstate_2020 <- mutate(df_mxstate_2020,
+                          value = 100*pop_male/pop)
+estatal <- mxstate_choropleth(df_mxstate_2020,
+                              title = "Población masculina (%)",
+                              legend = "(%)")
+
+mxstate_choropleth(df_mxstate_2020,
+                              title = "Población masculina (%)",
+                              legend = "(%)")
+  
+```
+
+## Mapas coropléticos (`mxmaps`)
+
+```{r, echo=F, out.width="97%", include=T, warning=FALSE, message=FALSE}
+estatal
+```
+
+## Mapas coropléticos (`mxmaps`)
+
+Para hacer mapas municipales utilizaremos la función `mxmunicipio_choropleth()`:
+```{r, echo=T, warning=FALSE, message=F}
+df_mxmunicipio_2020 <- mutate(df_mxmunicipio_2020,
+                          value = 100*pop_male/pop)
+municipal <- mxmunicipio_choropleth(df_mxmunicipio_2020,
+                              title = "Población masculina (%)",
+                              legend = "(%)")+
+  geom_polygon(aes(fill=value), color = "transparent")
+  
+```
+
+
+## Mapas coropléticos (`mxmaps`)
+
+```{r, echo=F, out.width="97%", include=T, warning=FALSE, message=FALSE}
+municipal
+```
+
+
+## Mapas coropléticos (`mxmaps`)
+
+- También podemos seleccionar estados/regiones/municipios específicos para hacer los mapas:
+
+```{r}
+selec <- mxmunicipio_choropleth(df_mxmunicipio_2020,
+  title = "Población masculina (%)",
+  legend = "(%)",
+  zoom = subset(df_mxmunicipio_2020,metro_area
+                %in% c("Valle de México"))$region)
+```
+
+## Mapas coropléticos (`mxmaps`)
+
+```{r, echo=F, out.width="97%", include=T, warning=FALSE, message=FALSE}
+selec
+```
+
+
+## Mapas coropléticos (`mxmaps`)
+
+- Adicionalmente, la paquetería mxmas nos deja hacer mapas exagonales con la función `mxhexbin_choropleth()`:
+
+```{r, echo=TRUE}
+hex <- mxhexbin_choropleth(df_mxstate_2020,
+                           title = "Población masculina (%)",
+                           legend = ("%"))
+```
+
+## Mapas coropléticos (`mxmaps`)
+
+```{r, echo=F, out.width="97%", include=T, warning=FALSE, message=FALSE}
+hex
+```
+
+## Ejercicios (ENOE)
+
+En 2024, la línea de pobreza por ingresos es de aproximadamente $4,564.96 en zonas urbanas (+100,000 habitantes).
+Un hogar se encuentra en situación de pobreza laboral si el ingreso laboral en ese hogar es inferior a la linea de pobreza por ingresos.
+
+1. Tomando lo anterior en cuenta cree una variable que indique qué hogares ubicados en zonas urbanas que se encuentran en situación de pobreza laboral, para ello, considere lo siguiente:
+  - El factor de expansión debe ser la suma de los habitantes del hogar.
+  - Revise la codificación de la variable t_loc_tri.
+  - r_def == 0, tipo == 1, c_res ==1 | c_res == 3,  elimine los hogares con un ingreso laboral de cero.
+  
+## Ejercicios (ENOE)
+2. En un mapa, muestre el porcentaje de hogares en situación de pobreza laboral por estado (sobre el total de hogares con almenos un integrante que trabaje).
+3. En un mapa, muestre el porcentaje de hogares en situación de pobreza laboral por municipio dentro de la ciudad autorrepresentativa "México" (revise la codificación de la variable cd_a).
+  
+```{r, echo = F, include=F}
+
+setwd("D:/OneDrive - El Colegio de México A.C/Programación Científica en R/Examen/Material")
+library(haven)
+library(tidyverse)
+library(mxmaps)
+enoe <- read_dta("ENOE_SDEMT224.dta") %>% 
+  filter(r_def == 0, tipo == 1, c_res ==3, t_loc_tri == 1) %>% 
+  mutate(ingocup = na_if(ingocup, 999998),
+         ocupado = clase2 == 1,
+         cve_ent = str_mxstate(ent),
+         cve_mun = str_mxmunicipio(mun)) %>% 
+  group_by(cd_a, cve_ent, con, v_sel, n_hog, h_mud) %>% 
+  summarise(ingreso = sum(ingocup, na.rm = T),
+              integrantes = max(n_ren),
+            ocupados = sum(ocupado),
+            weight = sum(fac_tri)) %>% 
+  filter(ocupados > 0) %>% 
+  mutate(pobreza = ingreso/ocupados < 4564.96) %>% 
+  group_by(cve_ent) %>% 
+  summarise(value = 100*weighted.mean(pobreza, weight))
+
+names(enoe) <- c("region", "value")
+
+enoe_map <- mxstate_choropleth(enoe,
+                               title = "Porcentaje de hogares en situación de pobreza laboral",
+                               legend = (""))
+
+
+setwd("C:/Users/user/OneDrive - El Colegio de México A.C/Programación Científica en R/Examen/Material")
+
+enoe2 <- read_dta("ENOE_SDEMT224.dta") %>% 
+  filter(r_def == 0, tipo == 1, c_res ==3, t_loc_tri == 1) %>% 
+  mutate(ingocup = na_if(ingocup, 999998),
+         ocupado = clase2 == 1,
+         cve_ent = str_mxstate(ent),
+         cve_mun = str_mxmunicipio(mun)) %>% 
+  group_by(cd_a, cve_ent,cve_mun, con, v_sel, n_hog, h_mud) %>% 
+  summarise(ingreso = sum(ingocup, na.rm = T),
+              integrantes = max(n_ren),
+            ocupados = sum(ocupado),
+            weight = sum(fac_tri)) %>% 
+  filter(ocupados > 0) %>% 
+  mutate(pobreza = ingreso/ocupados < 4564.96) %>% 
+  group_by(cve_ent, cve_mun, cd_a) %>% 
+  summarise(value = 100*weighted.mean(pobreza, weight)) %>% 
+  mutate(cve_mun = substr(cve_mun,3,5),
+    region = paste(cve_ent, cve_mun, sep = ""))
+
+enoe_map2 <- mxmunicipio_choropleth(enoe2,
+                               title = "Porcentaje de hogares en situación de pobreza laboral",
+                               legend = (""),
+                               zoom = subset(enoe2,cd_a
+                                            %in% c(1))$region)
+
+```
+
+## Ejercicios (ITER)
+
+1. Con la base `ITER_NALCSV20` calcule el porcentaje de personas que cuentan con algún rezago educativo por municipio.
+  - El rezago educativo lo defineremos como:
+    a. Personas de 15 y más que son analfabetas (an)
+    b. Porcentaje de personas de 6 a 14 años que no asisten a la escuela (noa)
+    c. Población de 15 y más con educación básica incompleta (se, pri_in, pri_co, sec_in).
+    
+- En un mapa represente los resultados.
+
+2. Repita el ejercicio anterior pero a nivel estatal en un mapa de hexágonos.
+
+```{r, echo=F, include=F}
+iter <- read_csv("ITER_NALCSV20.csv")
+ 
+iter <-  select(iter, P15YM_AN, P6A11_NOA, P12A14NOA, P15YM_SE, P15PRI_IN, P15PRI_CO, P15SEC_IN, 
+         POBTOT, P_0A2, P_3A5, ENTIDAD, MUN)
+a <- iter %>% 
+  mutate(
+    rezago = as.numeric(P15YM_AN) + 
+      as.numeric(P6A11_NOA) + as.numeric(P12A14NOA) + 
+      as.numeric(P15YM_SE) + as.numeric(P15PRI_IN) + as.numeric(P15PRI_CO) +
+      as.numeric(P15SEC_IN),
+    pob = as.numeric(POBTOT)-as.numeric(P_0A2)-as.numeric(P_3A5)) 
+
+
+iter_mun <-   a %>% 
+  group_by(ENTIDAD, MUN) %>%
+  summarise(value = 100*sum(rezago, na.rm = T)/ sum(pob, na.rm = T)) %>% 
+  mutate(region = paste(ENTIDAD,MUN, sep = ""))
+
+iter_mun_map <- mxmunicipio_choropleth(iter_mun) +
+  geom_polygon(aes(fill=value), color = "transparent")
+
+
+iter_ent <-   a %>% 
+  filter(ENTIDAD != "00") %>% 
+  group_by(ENTIDAD) %>%
+  summarise(value = 100*sum(rezago, na.rm = T)/ sum(pob, na.rm = T)) %>% 
+  mutate(region = ENTIDAD)
+
+iter_ent_map <- mxhexbin_choropleth(iter_ent) 
+
+```
