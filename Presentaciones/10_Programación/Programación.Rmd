@@ -1,0 +1,278 @@
+---
+title: "Programación científica en R"
+subtitle: "Programación"
+author: "Marcos Ehekatzin García Guzmán"
+date: 'Octubre de 2024'
+output: 
+  beamer_presentation:
+    theme: "Pittsburgh"
+    colortheme: "whale"
+    fonttheme: "serif"
+    slide_level: 2
+    toc: false
+header-includes:
+   - \usepackage[utf8]{inputenc}
+   - \usepackage[spanish]{babel}
+   - \usepackage{booktabs}
+   - \newcommand{\ind}{\perp\!\!\!\!\perp} 
+   - \usepackage{url}
+---
+
+  
+```{r setup, include=FALSE, echo=T, warning=F, message=F}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Funciones
+
+## Funciones
+
+- Las funciones son utilizadas para automatizar tareas de una manera general.
+  1. Podemos darles un nombre que haga referencia al proceso que estamos automatizando.
+  2. Es más fácil y rápido modificar o actualizar el código.
+  3. Reducimos las probabilidades de realizar errores.
+- Consideraremos escribir funciones siempre que necesitemos copiar y pegar un block de código más de dos veces.
+
+## Funciones
+- Ejemplo:
+
+```{r, include=FALSE, echo=FALSE, message=F, warning=F}
+library(tidyverse)
+```
+
+```{r}
+df <- tibble::tibble(a = rnorm(10),
+                    b = rnorm(10),
+                    c = rnorm(10),
+                    d = rnorm(10))
+df2 <- df %>% 
+  mutate(a = (a-min(a,na.rm = T))/
+           (max(a, na.rm = T)-min(a, na.rm = T)),
+         b = (b-min(b,na.rm = T))/
+           (max(b, na.rm = T)-min(b, na.rm = T)),
+         c = (c-min(c,na.rm = T))/
+           (max(b, na.rm = T)-min(c, na.rm = T)),
+         d = (d-min(d,na.rm = T))/
+           (max(d, na.rm = T)-min(d, na.rm = T)))
+
+```
+
+## Funciones
+
+- En el ejemplo anterior hay un error (difícil de ver) que surge de copiar y pegar el mismo código.
+
+- En este caso, es mejor crear una función.
+
+- Primero vamos a analizar el proceso que queremos automatizar e identificar:
+  1. Los inputs
+  2. Duplicaciones en el código
+  3. Posibles simplificaciones
+
+```
+> a = a = (a-min(a,na.rm = T))/
+    (max(a, na.rm = T)-min(a, na.rm = T))
+```
+
+## Funciones
+
+1. El único input que tenemos es la columna `a`. Propiamente `df$a`. Vamos a darle un nombre temporal a los inputs de la función (`x`).
+2. Noten que podemos obtener el mínimo y el máximo utilizando la función `range()` en lugar de duplicar procesos.
+3. Para simplificar el código guardaremos el rango en una variable temporal (`rng`).
+
+- Tendríamos:
+```{r}
+x <- df$a
+rng <- range(x, na.rm = T)
+(x-rng[1]) /(rng[2]-rng[1])
+
+```
+
+## Funciones
+
+- Para hacer la función seguiremos los siguientes pasos:
+
+1. Elegit un nombre para la función. Por ejemplo `resclae01`.
+2. Listar los inputs o argumentos de la función dentro del comando `function`.
+3. Pondremos nuestro código en el cuerpo de la función.
+
+
+
+
+```{r}
+rescale01 <- function(x){
+  rng <- range(x, na.rm = T)
+  (x-rng[1]) /(rng[2]-rng[1])
+}
+rescale01(df$a)
+```
+
+## Funciones
+
+- Ahora podemos aplicar la función al data frame de la siguiente manera:
+
+```{r}
+df2 <- df %>% 
+  mutate(a = rescale01(a), 
+         b = rescale01(b),
+         c = rescale01(c),
+         d = rescale01(d))
+```
+
+## Funciones: Ejecución condicional 
+
+- Podemos darle condiciones a la función para que solamente se ejecute en algunos casos con las funciones `if` y `else`.
+
+```
+>   if(condition){
+      #Código a ejecutar conado la condición es TRUE
+    } else {
+      #Código a ejecutar cuando la condición es FALSE
+    }
+```
+- Podemos utilizarala función `else_if` para añadir condiciones.
+
+## Funciones: Ejecución condicional 
+
+- Las condiciones siempre debe evaluar si es TRUE o FALSE.
+  - Si es un vector tendremos un mensaje de advertencia que nos indicará que solamente el primer elemento será usado.
+  - Si la condición es `NA` entonces tendremos un error.
+
+- También podemos usar `||` y `&&`para combinar múltiples expresiones lógicas.
+- Nunca hay que usar `|` o `&` porque estos son operaciones vectorizadas (se aplican a diferentes valores).
+- Si tenemos un vector lógico podemos colapsarlo a un solo valor con `any()` o `all()`.
+- Para la igualdad, utilizaremos la función `identical()`.
+
+
+## Funciones: Ejecución condicional 
+
+```{r}
+
+compara <- function(x,y){
+  if(x==y){
+    "Iguales"
+  }else if(x<y){
+    "x es menor que y"
+  }else if(x>y){
+    "x es mayor que y"
+  }
+}
+x <- 5
+y <- 10
+
+compara(x,y)
+```
+## Funciones: Argumentos inválidos
+
+- A veces es necesario indicar a la función que se detenga.
+- Ejemplo:
+  - Tenemos una función que hace un promedio ponderado y tenemos los vectores:
+  `x <- c(2*1:10)` y `w <- (.003*100:115)`.
+  - Si hacemos el promedio ponderado habrá un error. ¿Cuál?
+  - Para detener la función antes de que ocurra el problema utilizaremos la función `stop()`.
+  
+## Funciones: Argumentos inválidos
+
+```{r}
+wt_mean <- function(x, w){
+  if(length(x) != length(y)){
+    stop("'x' y 'w' deben tener la misma longitud")
+  }else{
+    sum(w*x)/sum(x)
+  }
+}
+```
+
+
+## Funciones: Ejercicio 1
+
+- Utilicemos el archivo `s_pib.csv`
+
+1. Haremos una función que nos permita transformar una variable a un índice base 100 en nuestro año de elección.
+2. Usemos la función que hicimos para transformar las variables de salario mínimo y PIB a índices 1970 = 100
+3. Grafiquemos ambas variables.
+
+
+```{r, echo=F, message=F, warning=F}
+s_pib <- read_csv("s_pib.csv")
+
+index100 <- function(x,year,year_base){
+  base = x[year == year_base]
+  100*x/base
+}
+
+s_pib <- s_pib %>% 
+  mutate(sal_1970 = index100(sal_min, year, 1970),
+         pib_1970 = index100(pib, year, 1970)) 
+
+
+
+
+plot1 <-ggplot(s_pib, aes(x = year)) +
+         geom_line(aes(y = sal_1970, linetype = "dashed"))+
+         geom_line(aes(y = pib_1970, linetype = "solid"))+
+  labs(y = "Índice 1970 = 100",
+       x = "Año",
+       linetype = "") +
+  theme_bw() +
+  scale_linetype_discrete(labels = c("Salario mínimo", "PIB"))+
+  theme(legend.position="bottom")
+
+       
+```
+
+```{r, echo=F, error=F, warning=F, message=F, out.width="60%"}
+plot1
+```
+
+
+## Funciones: Ejercicio 2
+
+- La fórmula para calcular una correlación ponderada es la siguiente:
+
+$$r_w = \frac{\sum w_i (X_i-\bar{X}_w) (Y_i-\bar{Y}_w)}{\sqrt{\sum w_i(X_i-\bar{X}_w)^2} \sqrt{\sum w_i(Y_i-\bar{Y}_w)}}$$
+
+- $w_i$ son los pesos que cumplen $\sum_{i=1}^n w_i = 1$
+
+- $\bar{X}_w$ y $\bar{Y}_w$ son los promedios ponderados de las variables $X$ y $Y$.
+
+- Haga una función para calcular la correlación ponderada y aplíquela en las variables de ingresos (ln) y 1) años de escolaridad, 2) sexo, 3) edad.
+
+
+```{r, include=FALSE, echo=FALSE}
+w_cor <- function(x,y,w){
+  w_1 <- w/sum(w, na.rm = T)
+  m_x <- weighted.mean(x,w_1, na.rm =T)
+  m_y <- weighted.mean(y,w_1, na.rm = T )
+  a <- x-m_x
+  b <- y-m_y
+  sum(w_1*a*b, na.rm = T)/(sqrt(sum(w_1*a^2, na.rm = T))*sqrt(sum(w_1*b^2, na.rm = T)))
+}
+
+library(haven)
+library(hutils)
+enoe <- read_dta("ENOE_SDEMT224.dta")
+enoe_cor <- enoe %>% 
+  filter(ingocup >0 & tipo == 1) %>% 
+  mutate(ingocup = na_if(ingocup, 999998),
+         lwage = log(ingocup),
+         anios_esc = na_if(anios_esc,99),
+         lesc = log(anios_esc+1),
+         q = weighted_ntile(lwage, fac_tri,10)) %>% 
+  group_by(q) %>% 
+  summarise(w_sch = w_cor(lwage,anios_esc,fac_tri),
+            w_sex = w_cor(lwage,sex,fac_tri),
+            w_eda = w_cor(lwage,eda,fac_tri),
+            ing = weighted.mean(lwage, fac_tri))
+
+plot2 <- ggplot(enoe_cor, aes(x=as.factor(q)))+
+  geom_point(aes(y=w_sch, color = "blue"))+
+  geom_point(aes(y=w_sex, color = "red"))+
+  geom_point(aes(y=w_eda, color = "green"))+
+  theme_bw()+
+  labs(x = "Decil",
+       y = "Coeficiente de correlación",
+       color = "")+
+  scale_color_discrete(labels=c("Educación","Sexo","Edad"))+
+  theme(legend.position = "bottom")
+```
+
