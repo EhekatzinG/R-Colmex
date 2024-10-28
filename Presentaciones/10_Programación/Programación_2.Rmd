@@ -1,0 +1,330 @@
+---
+title: "Programación científica en R"
+subtitle: "Programación"
+author: "Marcos Ehekatzin García Guzmán"
+date: 'Octubre de 2024'
+output: 
+  beamer_presentation:
+    theme: "Pittsburgh"
+    colortheme: "whale"
+    fonttheme: "serif"
+    slide_level: 2
+    toc: false
+header-includes:
+   - \usepackage[utf8]{inputenc}
+   - \usepackage[spanish]{babel}
+   - \usepackage{booktabs}
+   - \newcommand{\ind}{\perp\!\!\!\!\perp} 
+   - \usepackage{url}
+---
+
+  
+```{r setup, include=FALSE, echo=T, warning=F, message=F}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Funciones: Repaso
+- Estructura básica:
+```
+> Función <- function(x,y,z){
+    if(condition){
+      #Código a ejecutar conado la condición es TRUE
+    } else {
+      #Código a ejecutar cuando la condición es FALSE
+    }
+    return()
+  }
+```
+- También podemos combinar las condiciones  con la función `stop()`
+para que la función se detenga en ciertos casos.
+
+## Funciones: Ejercicio
+
+Haga una función con las siguientes características:
+
+1. La función debe calcular la media (ponderada) el error estándar (ponderado) y el intervalo de confianza de la media al 95%.
+
+2. Como resultado la función nos debe de dar un dataframe de un $1 \times 4$, donde las columnas sean: i) La media, ii) El error estándar, iii) El valor máximo del CI y iv) El valor mínimo del CI.
+
+- Para la media ponderada use la función weighted.mean
+- Para el error estándar, utilice la fórmula $se = \frac{\sum_{i=1}^n w_i(x_i -\bar{X})^2}{(\sum_{i=1}^nw_i)-1}$
+- Para el CI utilice la fórmula $\bar{X}\pm1.96\times se$
+- $w_i$ es el ponderador de la observación $i$ del vector $x$ y $\bar{X}$ es la media ponderada de las observaciones del vector $x$.
+
+## Funciones: Repaso
+
+- Cargue la ENOE y aplique la función sobre el logaritmo del ingreso de los hombres y las mujeres por separado.
+  - Solo quédese con las observaciones en donde se cumpla que i) tipo==1, ii) ingocup >0, iii) eda>14 & eda <66.
+  - Recuerde cambiar los valores del ingreso cuando éste es igual a 999998.
+
+- Replique la siguiente gráfica:
+
+```{r, echo=F, message=F, warning=F}
+library(haven)
+library(tidyverse)
+library(knitr)
+```
+
+```{r, echo=F, warning=F, message=F}
+setwd("C:/Users/user/OneDrive - El Colegio de México A.C/Programación Científica en R/Presentaciones/10_Programación")
+enoe <- read_dta("ENOE_SDEMT224.dta") %>% 
+  filter(ingocup > 0, tipo ==1, eda >14 & eda < 66) %>% 
+  mutate(ingocup= na_if(ingocup,999998),
+         lwage = log(ingocup),
+         sex = sex-1,
+         anios_esc = na_if(anios_esc,99))
+wtd_mean_se <- function(vec,fac){
+  if(class(vec)!="numeric" || class(fac)!="numeric"){
+    stop("Ambos vectores deben ser numéricos")
+    }else{
+      wmean <- weighted.mean(vec,fac,na.rm = T)
+      se <- sqrt(sum(fac*(vec-wmean)^2)/(sum(fac)-1))
+      ub <- wmean + 1.96*se
+      lb <- wmean - 1.96*se
+      result <- data.frame(cbind(wmean, se, ub, lb))
+      names(result) <- c("Mean", "Standar Error", "Upper", "Lower")
+    }
+  return(result)
+  }
+
+matrix1 <-wtd_mean_se(enoe$lwage[enoe$sex==1],enoe$fac_tri[enoe$sex== 1])
+matrix2 <-wtd_mean_se(enoe$lwage[enoe$sex==0],enoe$fac_tri[enoe$sex== 0])
+
+matrix <- data.frame(rbind(matrix1, matrix2)) %>% 
+  mutate(Sex = rownames(matrix))
+
+plot1<- ggplot(matrix, aes(x=Sex, color = Sex))+
+  geom_point(aes(y=Mean)) +
+  geom_errorbar(aes(ymin = Lower, ymax=Upper))+
+  theme_bw()+
+  labs(color="")+
+  theme(legend.position = "bottom")+
+  scale_color_discrete(labels=c("Women", "Men"))
+```
+
+![]("Plot1.png"){width=40%}
+
+## Iteraciones
+
+- En el caso anterior es fácil aplicar la función porque solo lo hacemos dos veces (hombres y mujeres).
+
+- Pero ¿qué pasaría si necesitáramos aplicar la función a hombres y mujeres por separado y para cada decil?
+
+- Eso rompe la regla de dedo: No copiar y pegar más de dos veces el mismo código.
+
+- Para solucionarlo podemos utilizar iteraciones (loops)
+
+## Iteraciones
+
+- En R tenemos dos tipos de iteraciones: i) Iteraciones `for` e iteraciones `while`
+
+
+- Las iteraciones del tipo `for` las ocuparemos cuando sepamos exactamente el número de veces que queremos repetir un proceso.
+
+- Las iteraciones del tipo `while`las usaremos cuando no sepamos exactamente el número de veces que necesitamos repetir un proceso, pero sí sepamos cuál es la condición lógica en donde la iteración tiene que terminar.
+
+## Iteraciones: `for`
+
+- El ejemplo más básico de una iteración `for` es la siguiente:
+
+```{r, echo = T}
+for(i in 1:5) {
+  print(i+1)
+}
+```
+
+## Iteraciones: `for`
+
+- Lo que estamos haciendo es equivalente a hacer el siguiente proceso:
+
+```{r, echo = T}
+i<-1
+print(i+1)
+
+i<-2
+print(i+1)
+
+i<-3
+print(i+1)
+```
+- Este proceso sigue hasta que la iteración alcanza el valor final de la secuencia (5 en este caso).
+
+## Iteraciones: `for`
+
+- Podemos utilizar estas iteraciones para hacer operaciones en distintos elementos de una lista o diferentes variables de una matriz.
+
+- Por ejemplo, podríamos hacer un `for loop` para obtener la media de las variables ingreso, edad y horas trabajadas en la semana.
+
+```{r, echo=T}
+vars <- list(enoe$lwage, enoe$eda, enoe$hrsocup)
+
+for (i in 1:length(vars)) {
+  print(weighted.mean(vars[[i]],enoe$fac_tri))
+  }
+```
+## Iteraciones: `for`
+
+- Los valores anteriores no se han guardado en ningún lugar. 
+- Para guardarlos, podemos crear un vector que iremos rellenando.
+
+```{r, echo=T}
+
+medias <- vector("double", length(vars))
+names(medias)<-c("Ingreso", "Edad", "Horas")
+for (i in 1:length(vars)) {
+  medias[i] <-weighted.mean(vars[[i]],enoe$fac_tri)
+  }
+medias
+
+```
+
+## Iteraciones: `for`
+
+- Para hacer más sencilla la secuencia, podemos utilizar la función `sec_along()`, de la siguiente manera:
+```{r, echo = T}
+medias <- vector("double", length(vars))
+names(medias)<-c("Ingreso", "Edad", "Horas")
+for (i in seq_along(vars)) {
+  medias[i] <-weighted.mean(vars[[i]],enoe$fac_tri)
+  }
+```
+
+## Iteraciones: `for`
+
+- Al igual que con las funciones, podemos añadir condicionales en una iteración:
+```{r, echo = T}
+enoe$entidad <- as.character(enoe$ent)
+vars <- list(enoe$lwage, enoe$eda, enoe$hrsocup,
+             enoe$entidad)
+
+medias <- vector("double", length(vars))
+names(medias) <- c("Ingreso", "Edad","Horas","Entidad")
+
+for (i in seq_along(vars)) {
+  if(class(vars[[i]]) == "character"){
+    warning("Variable no numérica")
+    medias[i] <- NA
+  } else{
+      medias[i] <-weighted.mean(vars[[i]],enoe$fac_tri)
+  }
+}
+medias
+
+```
+## Iteraciones: `for`
+
+- Hay veces que no conocemos el largo del output.
+
+- Imaginen que queremos simular algunos vectores con un largo aleatorio y juntar todos los elementos en un solo vector.
+
+- Una posible solución es la siguiente:
+
+```{r, echo=TRUE,warning=FALSE}
+means <- c(0,1,2)
+output <- double()
+for (i in seq_along(means)) {
+  n<- sample(100,1)
+  output <- c(output, rnorm(n,means[i]))
+}
+length(output)
+```
+## Iteraciones: `for`
+
+- La solución anterior no es eficiente, ya que estamos copiando los datos resultantes de cada iteración.
+- Una mejor solución es guardar los resultados en una lista y  y después combinarlos en un solo vector cuando terminen las iteraciones.
+
+```{r}
+out <- vector("list", length(means))
+for (i in seq_along(means)) {
+  n<- sample(100,1)
+  out[[i]] <- rnorm(n,means[i])
+}
+out2<-unlist(out)
+length(out2)
+```
+## Iteraciones: `for`
+
+- También podemos utilizar iteraciones para guardar nuevos dataframes.
+
+- Por ejemplo, si queremos aplicar nuestra función a distintas variables de la ENOE y guardar los resultados en dataframes distintos.
+
+```{r, eho = T}
+vars<-list(enoe$lwage,enoe$eda,enoe$hrsocup)
+for (i in seq_along(vars)) {
+  dfName <- paste0("m",i)
+  assign(dfName, wtd_mean_se(vars[[i]],enoe$fac_tri))  
+}
+
+```
+
+## Iteraciones: `for`
+
+- Ejercicio: Utilizando una iteración `for` calcule, por decil, el promedio, el error estándar y el CI al 95% del ingreso en logaritmos.
+- Guarde todos los resultados en un solo dataframe.
+  - Hint: Utilice la función `bind_rows(lista)`
+- Grafique.
+```{r, echo=F, message=F, warning=F, out.width="50%", fig.align='center'}
+library(hutils)
+library(tidyverse)
+out <-vector("list",10)
+enoe <- enoe %>% 
+  mutate(n=weighted_ntile(lwage,fac_tri,10),
+         sexo= sex+1)
+for (i in 1:10) {
+  out[[i]] <- wtd_mean_se(enoe$lwage[enoe$n==i], enoe$fac_tri[enoe$n==i])
+}
+x<- bind_rows(out)
+x <- x %>% 
+  mutate(Quantile= rownames(x),
+         Quantile = as.numeric(Quantile))
+
+ggplot(x, aes(x=as.factor(Quantile)))+
+  geom_point(aes(y=Mean))+
+  geom_linerange(aes(ymin=Lower, ymax=Upper))+
+  theme_bw() +
+  labs(x= "Quantile",
+       y="Wage (ln)")
+
+out_sex <- vector("list",20)
+```
+
+## Iteraciones: `for`
+
+
+```{r, echo=F, message=F, warning=F, out.width="70%", fig.align='center'}
+for (i in 1:10) {
+  for (j in 1:2) {
+    if(j==1){
+      N = i
+      out_sex[[N]] <- wtd_mean_se(enoe$lwage[enoe$n==i & enoe$sexo==j], enoe$fac_tri[enoe$n==i & enoe$sexo==j])
+      out_sex[[N]]$sex <- j
+      out_sex[[N]]$q <- i
+    } else {
+      N = i+10
+      out_sex[[N]] <- wtd_mean_se(enoe$lwage[enoe$n==i & enoe$sexo==j], enoe$fac_tri[enoe$n==i & enoe$sexo==j])
+      out_sex[[N]]$sex <- j
+      out_sex[[N]]$q <- i
+    }
+  }
+}
+
+
+x2<- bind_rows(out_sex)
+
+
+ggplot(x2, aes(x=as.factor(q),color=as.factor(sex)))+
+  facet_wrap(vars(sex), labeller = labeller(sex=c("1"="Men",
+                                                  "2"= "Women")))+
+  geom_point(aes(y=Mean))+
+  geom_linerange(aes(ymin=Lower, ymax=Upper))+
+  theme_bw() +
+  labs(x= "Quantile",
+       y="Wage (ln)",
+       color = "")+
+  scale_color_discrete(labels = c("Men", "Women"))+
+  theme(legend.position="none")
+
+```
+
+
+
