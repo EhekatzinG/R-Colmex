@@ -1,0 +1,210 @@
+---
+title: "Programación científica en R"
+subtitle: "R Markdown"
+author: "Marcos Ehekatzin García Guzmán"
+date: 'Noviembre de 2024'
+output: 
+  beamer_presentation:
+    theme: "Pittsburgh"
+    colortheme: "whale"
+    fonttheme: "serif"
+    slide_level: 2
+    toc: true
+header-includes:
+   - \usepackage[utf8]{inputenc}
+   - \usepackage[spanish]{babel}
+   - \usepackage{booktabs}
+   - \newcommand{\ind}{\perp\!\!\!\!\perp} 
+   - \usepackage{url}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, include = TRUE, 
+                      message = FALSE, warning = FALSE)
+```
+
+## Instalación
+
+- Instalaremos `Rmarkdown` con cualquier otra paquetería.
+
+```{r, echo=T, messages= F, warning = F, eval = F}
+# Install from CRAN
+install.packages('rmarkdown')
+```
+
+- También puede instalarse desde github de la siguiente manera
+
+```{r, echo=T, messages= F, warning = F, eval = F}
+# Install from GitHub
+if (!requireNamespace("devtools"))
+  install.packages('devtools')
+devtools::install_github('rstudio/rmarkdown')
+```
+
+## Instalación
+
+- Adicionalmente, para generar documentos en formato pdf utilizaremos la paquetería tinytex.
+
+- Tinitext nos permite utilizar `Latex` desde `R`, por lo que es posible utilizar comandos e instalar paqueterías de `Latex` y compilarlas desde `R`.
+
+```{r, echo=T, messages= F, warning = F, eval = F}
+#Install Tinytext
+install.packages('tinytex')
+tinytex::install_tinytex()
+```
+
+## Introducción
+
+- `R Markdown` está diseñado para facilitar la reproducción.
+  1. Podemos computar código
+  2. Podemos generar documentos
+
+- Para iniciar un nuevo documento, crearemos un nuevo archivo `Rmd`desde el menú, presionando `File -> New File -> R Markdown`
+
+## Introducción
+
+\begin{figure}
+  \centering
+  \includegraphics[width = 0.8\textwidth]{inicio_example.png}
+  \label{Rstudio_example}
+\end{figure}
+
+## Introducción
+
+- En la pantalla anterior podemos seleccionar el tipo de documento que necesitamos.
+  - Document: `htlm`, `pdf`, `Word`.
+  - Presentation: `Slidy`, `Beamer`, `ppt`
+
+- Si bien podemos convertir nuestros documentos de un formato a otro, hay que tener cuidado.
+  - Algunos formatos no soportan algunos comandos.
+  
+## Introducción
+
+- En un documento tendremos tres componentes principales:
+  1. El código
+  2. El texto
+  3. Los metadatos (YAML)
+- El cuerpo del documento seguirá al YAML.
+  - Formato
+  - Paqueterías
+  - Información del autor
+  - Títulos
+  
+## YAML
+
+- Un YAML sencillo se verá como en la siguiente imagen:
+
+\begin{figure}
+  \centering
+  \includegraphics[width = 0.8\textwidth]{ejemploYAML_1.png}
+  \label{Rstudio_example}
+\end{figure}
+
+## YAML
+- Un YAML avanzado se verá de la siguiente manera:
+
+\begin{figure}
+  \centering
+  \includegraphics[width = 0.6\textwidth]{ejemploYAML_2.png}
+  \label{Rstudio_example}
+\end{figure}
+
+## chunks
+
+- Para el código, utilizaremos `chunks`.
+  - Un `chunk` empieza y termina con comillas invertidas ```
+  - En la primera línea del chunk, entre corchetes, definiremos el lenguaje del código y las opciones para el chunk.
+- Las opciones básicas de los chunks son:
+  1. `include`: Nos permite controlar si el código y los resultados aparecen en el documento final.
+  2. `echo`: Nos permite controlar si el código aparece en el documento final. Los resultados aparecerán.
+  3. `message`: Nos permite controlar si los mensajes generados por el código aparecen en el documento final.
+  4. `warning`: Igual que `message` pero para los warnings.
+
+## chunks
+
+- En el primer chunk del documento, podremos establecer los valores predeterminados con `opts_chunk$set`
+
+\begin{figure}
+  \centering
+  \includegraphics[width = 0.6\textwidth]{chunk.png}
+  \label{Rstudio_example}
+\end{figure}
+
+- Los siguientes chunks seguirán la configuaración a menos que indiquemos lo contrario.
+
+## chunks
+
+- Con la configuración podemos incluir gráficas y tablas utilizando código directamente en `R`.
+\begin{figure}
+  \centering
+  \includegraphics[width = 0.6\textwidth]{chunk_graf.png}
+  \label{Rstudio_example}
+\end{figure}
+
+## chunks
+
+```{r, fig.cap= "Ejemplo", fig.==1, echo = F}
+fit = lm(dist ~ speed, data = cars)
+b = coef(fit)
+plot(cars)
+abline(fit)
+```
+
+## Sintaxis
+
+- Formato del texto:
+  - Negritas: `**text**` 
+  - Itálicas: `*text*`
+  - Código: ```` ```code``` ```` 
+  - Enlaces: `[text](link)`, por ejemplo `[RStudio](https://www.rstudio.com)`
+  
+## Sintaxis
+
+- Texto en bloques:
+  1. Títulos: Los títulos se indican con `#`, los subtítulos con `##` y así sucesivamente.
+  2. Para bullets podemos utilizar `-`,  `*`, o `+`. Podemos anidar listas dentro de otras listas según el tabulado.
+  ```
+  - item 1
+    - item 1.1
+    -item 1.2
+  -item 2
+  ```
+  3. Para listas enumeradas simplemente utilizamos los números y un punto (1., 2. ,...) 
+  4. Podemos combinar bullets y listas enumeradas.
+
+## Expresiones matemáticas
+
+- Las expresiones matemáticas en el texto van entre `$` ($math expresion$)
+- Para las expresiones matemáticas se utiliza la sintaxis de latex, por ejemplo: $f(k) = {n \choose k} p^{k} (1-p)^{n-k}$
+  - (No veremos Latex, pero en el repositorio de la clase habrá una presentación)
+- Para que las expresiones aparezcan enumeradas utilizaremos la sintaxis de látex
+
+```
+\begin{equation}
+f(k) = {n \choose k} p^{k} (1-p)^{n-k}
+\end{equation}
+```
+\begin{equation}
+f(k) = {n \choose k} p^{k} (1-p)^{n-k}
+\end{equation}
+
+## chunks, figuras y tablas
+
+
+- Para las figuras podemos establecer el tamaño de la figura con fig.width o fig.height.
+  - También podemos hacerlo con out.width = "XX%" o con out.height = "XX%".
+  - Podemos alinear la figura con fig.align = X, donde las alineaciones pueden ser left, center o right.
+  - Podemos añadir un título a la figura con fig.cao = "Título"
+- Si queremos añadir una imagen en lugar de una gráfica hecha en `R` podemos utilizar la sintaxis de Latex o ``knitr::include_graphics("path")``
+  
+## chunks, figuras y tablas
+
+- Para las tablas, lo más conveniente es utilizar la paquetería `kableExtra`
+- Para instalarlo: `install.packages("kableExtra")`
+
+```{r}
+library(kableExtra)
+dt <- mtcars[1:3, 1:6]
+kable(head(dt), format = "latex", booktabs = T,
+      caption="Ejemplo") 
+```

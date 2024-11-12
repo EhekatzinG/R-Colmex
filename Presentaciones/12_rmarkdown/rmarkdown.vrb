@@ -1,0 +1,34 @@
+\frametitle{chunks, figuras y tablas}
+\phantomsection\label{chunks-figuras-y-tablas-1}
+\begin{itemize}
+\tightlist
+\item
+  Para las tablas, lo más conveniente es utilizar la paquetería
+  \texttt{kableExtra}
+\item
+  Para instalarlo: \texttt{install.packages("kableExtra")}
+\end{itemize}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(kableExtra)}
+\NormalTok{dt }\OtherTok{\textless{}{-}}\NormalTok{ mtcars[}\DecValTok{1}\SpecialCharTok{:}\DecValTok{3}\NormalTok{, }\DecValTok{1}\SpecialCharTok{:}\DecValTok{6}\NormalTok{]}
+\FunctionTok{kable}\NormalTok{(}\FunctionTok{head}\NormalTok{(dt), }\AttributeTok{format =} \StringTok{"latex"}\NormalTok{, }\AttributeTok{booktabs =}\NormalTok{ T,}
+      \AttributeTok{caption=}\StringTok{"Ejemplo"}\NormalTok{) }
+\end{Highlighting}
+\end{Shaded}
+
+\begin{table}
+
+\caption{\label{tab:unnamed-chunk-4}Ejemplo}
+\centering
+\begin{tabular}[t]{lrrrrrr}
+\toprule
+  & mpg & cyl & disp & hp & drat & wt\\
+\midrule
+Mazda RX4 & 21.0 & 6 & 160 & 110 & 3.90 & 2.620\\
+Mazda RX4 Wag & 21.0 & 6 & 160 & 110 & 3.90 & 2.875\\
+Datsun 710 & 22.8 & 4 & 108 & 93 & 3.85 & 2.320\\
+\bottomrule
+\end{tabular}
+\end{table}
